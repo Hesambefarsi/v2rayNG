@@ -347,6 +347,7 @@
     <string name="title_sub_update">تحديث الاشتراك</string>
     <string name="title_ping_all_server">اختبار تأخير TCP (TCPing)</string>
     <string name="title_real_ping_all_server">اختبار زمن الاستجابة الفعلي</string>
+    <string name="title_bandwidth_test_all_server">اختبار عرض النطاق (5 ميغابايت)</string>
     <string name="title_user_asset_setting">ملفات الأصول</string>
     <string name="title_sort_by_test_results">الفرز حسب نتائج الاختبار</string>
     <string name="title_filter_config">تصفية ملف التكوين</string>
@@ -411,6 +412,8 @@
     <string name="connection_test_testing_count">جارٍ اختبار %d من التكوينات…</string>
     <string name="connection_test_available">تم الاتصال بنجاح خلال %1$s</string>
     <string name="server_test_delay_value">%1$d ملي ثانية</string>
+    <string name="server_test_bandwidth_value">%1$.1f Mbps</string>
+    <string name="server_test_bandwidth_failed">فشل اختبار السرعة</string>
     <string name="connection_test_error">فشل اختبار الاتصال: %s</string>
     <string name="connection_test_fail">الإنترنت غير متاح</string>
     <string name="connection_test_error_status_code">رمز الخطأ: #%d</string>
