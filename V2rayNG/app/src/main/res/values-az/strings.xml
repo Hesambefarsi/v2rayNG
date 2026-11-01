@@ -347,6 +347,7 @@
     <string name="title_sub_update">Abunəliyi yenilə</string>
     <string name="title_ping_all_server">TCP gecikmələrini sınaqdan keçir (TCPing)</string>
     <string name="title_real_ping_all_server">Real gecikmələri sınaqdan keçir</string>
+    <string name="title_bandwidth_test_all_server">Sürət testi (5 MB)</string>
     <string name="title_user_asset_setting">Resurs faylları</string>
     <string name="title_sort_by_test_results">Sınaq nəticələrinə görə çeşidlə</string>
     <string name="title_filter_config">Konfiqurasiyaları filtrdən keçir</string>
@@ -403,6 +404,8 @@
     <string name="connection_test_testing_count">%d konfiqurasiya yoxlanılır…</string>
     <string name="connection_test_available">Bağlantı %1$s ərzində uğurla quruldu</string>
     <string name="server_test_delay_value">%1$d ms</string>
+    <string name="server_test_bandwidth_value">%1$.1f Mbps</string>
+    <string name="server_test_bandwidth_failed">Sürət testi uğursuz oldu</string>
     <string name="connection_test_error">Bağlantı sınağı uğursuz oldu: %s</string>
     <string name="connection_test_fail">İnternet əlçatmazdır</string>
     <string name="connection_test_error_status_code">Xəta kodu: #%d</string>
