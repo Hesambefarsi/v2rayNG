@@ -347,6 +347,7 @@
     <string name="title_sub_update">Обновить подписку</string>
     <string name="title_ping_all_server">Проверить TCP-задержку</string>
     <string name="title_real_ping_all_server">Проверить реальную задержку</string>
+    <string name="title_bandwidth_test_all_server">Тест пропускной способности (5 МБ)</string>
     <string name="title_user_asset_setting">Файлы ресурсов</string>
     <string name="title_sort_by_test_results">Сортировать по результатам теста</string>
     <string name="title_filter_config">Фильтр профилей</string>
@@ -407,6 +408,8 @@
     <string name="connection_test_testing_count">Проверка профилей (%d)…</string>
     <string name="connection_test_available">Соединение установлено за %1$s</string>
     <string name="server_test_delay_value">%1$d мс</string>
+    <string name="server_test_bandwidth_value">%1$.1f Мбит/с</string>
+    <string name="server_test_bandwidth_failed">Тест скорости не пройден</string>
     <string name="connection_test_error">Ошибка проверки соединения: %s</string>
     <string name="connection_test_fail">Интернет недоступен</string>
     <string name="connection_test_error_status_code">Код ошибки: #%d</string>
