@@ -67,6 +67,30 @@ private fun applyTestDelayResultsToRows(
     }
 }
 
+private fun applyTestBandwidthResults(
+    servers: List<ServersCache>,
+    updates: Map<String, Long>,
+): List<ServersCache> = servers.map { server ->
+    val kbps = updates[server.guid]
+    if (kbps == null || kbps == server.testBandwidthKbps) {
+        server
+    } else {
+        server.copy(testBandwidthKbps = kbps)
+    }
+}
+
+private fun applyTestBandwidthResultsToRows(
+    rows: List<ServerRowUiModel>,
+    updates: Map<String, Long>,
+): List<ServerRowUiModel> = rows.map { row ->
+    val kbps = updates[row.guid]
+    if (kbps == null || kbps == row.testBandwidthKbps) {
+        row
+    } else {
+        row.copy(testBandwidthKbps = kbps)
+    }
+}
+
 class MainViewModel(
     application: Application,
     private val dataSource: MainDataSource
@@ -106,6 +130,7 @@ class MainViewModel(
     private var reloadJob: Job? = null
     private var testResultFlushJob: Job? = null
     private val pendingTestResults = linkedMapOf<String, Long>()
+    private val pendingBandwidthResults = linkedMapOf<String, Long>()
 
     private val testRequests = MainTestRequests()
     private var bulkTestJob: Job? = null
@@ -186,11 +211,15 @@ class MainViewModel(
     }
 
     private fun queueTestResult(result: RealPingResult, request: MainTestRequests.Bulk) {
-        pendingTestResults[result.guid] = result.delayMillis
+        if (request.bandwidth) {
+            pendingBandwidthResults[result.guid] = result.bandwidthKbps
+        } else {
+            pendingTestResults[result.guid] = result.delayMillis
+        }
         if (testResultFlushJob?.isActive == true) return
 
         testResultFlushJob = viewModelScope.launch {
-            while (pendingTestResults.isNotEmpty()) {
+            while (pendingTestResults.isNotEmpty() || pendingBandwidthResults.isNotEmpty()) {
                 delay(TEST_RESULT_FLUSH_INTERVAL_MS)
                 flushPendingTestResults(request)
             }
@@ -198,23 +227,34 @@ class MainViewModel(
     }
 
     private suspend fun flushPendingTestResults(request: MainTestRequests.Bulk) {
-        if (pendingTestResults.isEmpty()) return
+        if (pendingTestResults.isEmpty() && pendingBandwidthResults.isEmpty()) return
         if (testRequests.bulk?.id != request.id) return
 
-        val updates = cacheMutex.withLock {
+        val (updates, bandwidthUpdates) = cacheMutex.withLock {
             val drained = pendingTestResults.toMap()
+            val drainedBandwidth = pendingBandwidthResults.toMap()
             pendingTestResults.clear()
+            pendingBandwidthResults.clear()
             groupDataCache[request.groupId]?.let { cached ->
-                groupDataCache[request.groupId] = applyTestDelayResults(cached, drained)
+                groupDataCache[request.groupId] = applyTestBandwidthResults(
+                    applyTestDelayResults(cached, drained),
+                    drainedBandwidth
+                )
             }
-            drained
+            drained to drainedBandwidth
         }
-        if (updates.isEmpty()) return
+        if (updates.isEmpty() && bandwidthUpdates.isEmpty()) return
         if (testRequests.bulk?.id != request.id) return
         mutableServerGroupState(request.groupId).update { current ->
             current.copy(
-                servers = applyTestDelayResults(current.servers, updates),
-                rows = applyTestDelayResultsToRows(current.rows, updates),
+                servers = applyTestBandwidthResults(
+                    applyTestDelayResults(current.servers, updates),
+                    bandwidthUpdates
+                ),
+                rows = applyTestBandwidthResultsToRows(
+                    applyTestDelayResultsToRows(current.rows, updates),
+                    bandwidthUpdates
+                ),
             )
         }
     }
@@ -279,6 +319,7 @@ class MainViewModel(
             MainAction.RefreshGroups -> setupGroupTab(forceRefresh = true)
             MainAction.TestAllServers -> testAllRealPing(true)
             MainAction.TestRealAllServers -> testAllRealPing()
+            MainAction.TestBandwidthAllServers -> testAllBandwidth()
             MainAction.CancelTesting -> cancelAllPing()
             MainAction.RemoveAllServers -> removeAllServerAsync()
             MainAction.RemoveDuplicateServers -> removeDuplicateServerAsync()
@@ -353,7 +394,8 @@ class MainViewModel(
             ServersCache(
                 guid = guid,
                 profile = profile.copy(),
-                testDelayMillis = affiliation?.testDelayMillis ?: 0L
+                testDelayMillis = affiliation?.testDelayMillis ?: 0L,
+                testBandwidthKbps = affiliation?.testBandwidthKbps ?: 0L
             )
         }
 
@@ -885,10 +927,61 @@ class MainViewModel(
         }
     }
 
+    fun testAllBandwidth() {
+        cancelAllPing()
+        val groupId = uiState.value.selectedGroupId
+        val servers = currentServers()
+        if (servers.isEmpty()) {
+            return
+        }
+        val serverGuids = servers.map { it.guid }
+        mutableServerGroupState(groupId).update { current ->
+            current.copy(
+                servers = current.servers.map { server ->
+                    if (server.testBandwidthKbps == 0L) server
+                    else server.copy(testBandwidthKbps = 0L)
+                },
+                rows = current.rows.map { row ->
+                    if (row.testBandwidthKbps == 0L) row
+                    else row.copy(testBandwidthKbps = 0L)
+                }
+            )
+        }
+        val request = testRequests.beginBulk(groupId, bandwidth = true)
+        val message = TestServiceMessage(
+            key = AppConfig.MSG_MEASURE_CONFIG_START,
+            subscriptionId = groupId,
+            serverGuids = if (keywordFilter.isNotEmpty()) serverGuids else emptyList(),
+            bandwidth = true
+        )
+        _uiState.update {
+            it.copy(
+                isTesting = true,
+                status = MainStatus.Testing
+            )
+        }
+        bulkTestJob = viewModelScope.launch {
+            withContext(ioDispatcher) {
+                dataSource.clearAllTestBandwidthResults(serverGuids)
+                val resetGuids = serverGuids.toHashSet()
+                cacheMutex.withLock {
+                    groupDataCache[groupId]?.let { cached ->
+                        groupDataCache[groupId] = cached.map { server ->
+                            if (server.guid !in resetGuids || server.testBandwidthKbps == 0L) server
+                            else server.copy(testBandwidthKbps = 0L)
+                        }
+                    }
+                }
+            }
+            dataSource.sendMsg2TestService(message, request.id)
+        }
+    }
+
     private fun cancelPendingTestResults() {
         testResultFlushJob?.cancel()
         testResultFlushJob = null
         pendingTestResults.clear()
+        pendingBandwidthResults.clear()
     }
 
     fun testCurrentServerRealPing() {
