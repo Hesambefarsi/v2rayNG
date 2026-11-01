@@ -136,6 +136,9 @@ object AppConfig {
     const val TG_CHANNEL_URL = "https://t.me/github_2dust"
     const val DELAY_TEST_URL = "https://www.gstatic.com/generate_204"
     const val DELAY_TEST_URL2 = "https://www.google.com/generate_204"
+    const val BANDWIDTH_TEST_URL = "https://speed.cloudflare.com/__down?bytes=5000000"
+    const val BANDWIDTH_TEST_BYTES = 5_000_000L
+    const val BANDWIDTH_TEST_TIMEOUT_SEC = 30L
     const val OBSERVATORY_LEAST_PING_INTERVAL = "3m"
     const val OBSERVATORY_LEAST_LOAD_INTERVAL = "5m"
     const val OBSERVATORY_LEAST_LOAD_METHOD = "HEAD"
