@@ -84,6 +84,33 @@ object CoreNativeManager {
     }
 
     /**
+     * Measure outbound download bandwidth through a temporary core instance
+     * (same approach as [measureOutboundDelay], but downloads a ~5 MB file).
+     *
+     * @param config The configuration JSON string
+     * @param testUrl The URL of the file to download
+     * @return Download speed in kbit/s, or -1 if the test failed
+     */
+    fun measureOutboundBandwidth(config: String, testUrl: String): Long {
+        return try {
+            // The native side returns "bytes,ttfbMs,durationMs".
+            val raw = Libv2ray.measureOutboundBandwidth(
+                config,
+                testUrl,
+                AppConfig.BANDWIDTH_TEST_BYTES,
+                AppConfig.BANDWIDTH_TEST_TIMEOUT_SEC
+            )
+            val parts = raw.split(",").map { it.trim().toLong() }
+            val bytes = parts[0]
+            val downloadMs = (parts[2] - parts[1]).takeIf { it > 0 } ?: parts[2]
+            if (bytes <= 0L || downloadMs <= 0L) -1L else bytes * 8L / downloadMs
+        } catch (e: Exception) {
+            LogUtil.e(AppConfig.TAG, "Failed to measure outbound bandwidth", e)
+            -1L
+        }
+    }
+
+    /**
      * Create a new core controller instance.
      *
      * @param handler The callback handler for core events
