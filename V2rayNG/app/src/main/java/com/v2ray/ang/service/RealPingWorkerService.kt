@@ -1,6 +1,7 @@
 package com.v2ray.ang.service
 
 import android.content.Context
+import com.v2ray.ang.AppConfig
 import com.v2ray.ang.core.CoreConfigManager
 import com.v2ray.ang.core.CoreNativeManager
 import com.v2ray.ang.dto.RealPingEvent
@@ -46,10 +47,12 @@ class RealPingWorkerService(
     private val context: Context,
     private val guids: List<String>,
     private val onlyTcp: Boolean = false,
+    private val bandwidth: Boolean = false,
     private val onEvent: (RealPingEvent) -> Unit = {}
 ) {
     private val job = SupervisorJob()
-    private val concurrency = SettingsManager.getRealPingConcurrency()
+    // Bandwidth tests run one at a time: parallel downloads share the same uplink and skew each other.
+    private val concurrency = if (bandwidth) 1 else SettingsManager.getRealPingConcurrency()
     private val dispatcher = Executors.newFixedThreadPool(if (onlyTcp) concurrency * 2 else concurrency).asCoroutineDispatcher()
     private val scope = CoroutineScope(job + dispatcher + CoroutineName("RealPingBatchWorker"))
 
@@ -62,9 +65,16 @@ class RealPingWorkerService(
             scope.launch {
                 runningCount.incrementAndGet()
                 try {
-                    val result = if (onlyTcp) startTcping(guid) else startRealPing(guid)
-                    if (scope.isActive) {
-                        onEvent(RealPingEvent.Result(guid, result))
+                    if (bandwidth) {
+                        val kbps = startBandwidth(guid)
+                        if (scope.isActive) {
+                            onEvent(RealPingEvent.Result(guid, 0L, kbps))
+                        }
+                    } else {
+                        val result = if (onlyTcp) startTcping(guid) else startRealPing(guid)
+                        if (scope.isActive) {
+                            onEvent(RealPingEvent.Result(guid, result))
+                        }
                     }
                 } catch (_: Throwable) {
                     // ignore
@@ -129,6 +139,35 @@ class RealPingWorkerService(
         }
         return RealPingExecutionLimiter.run(config.configType) {
             CoreNativeManager.measureOutboundDelay(configResult.content, SettingsManager.getDelayTestUrl())
+        }
+    }
+
+    private suspend fun startBandwidth(guid: String): Long {
+        val retFailure = -1L
+
+        val config = MmkvManager.decodeServerConfig(guid) ?: return retFailure
+        // Same cheap TCP reachability pre-check as real ping, so dead servers fail fast.
+        if (!config.configType.isComplexType()
+            && config.configType != EConfigType.HYSTERIA2
+            && config.configType != EConfigType.WIREGUARD
+            && config.alpn?.startsWith("h3") != true
+            && config.server.isNotNullEmpty()
+            && config.serverPort?.toIntOrNull() != null
+        ) {
+            val url = config.server.orEmpty()
+            val port = config.serverPort.orEmpty().toInt()
+            val tcpTime = SpeedtestManager.socketConnectTime(url, port, 1000)
+            if (tcpTime <= -1L) {
+                return retFailure
+            }
+        }
+
+        val configResult = CoreConfigManager.getV2rayConfig4Speedtest(context, guid)
+        if (!configResult.status) {
+            return retFailure
+        }
+        return RealPingExecutionLimiter.run(config.configType) {
+            CoreNativeManager.measureOutboundBandwidth(configResult.content, AppConfig.BANDWIDTH_TEST_URL)
         }
     }
 
