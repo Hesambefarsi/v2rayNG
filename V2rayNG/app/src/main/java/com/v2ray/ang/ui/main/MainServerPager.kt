@@ -343,11 +343,17 @@ private fun ServerListItem(
     doubleColumnDisplay: Boolean,
     actions: ServerRowActions
 ) {
-    val testResult = if (row.testDelayMillis == 0L) {
+    val delayText = if (row.testDelayMillis == 0L) {
         ""
     } else {
         stringResource(R.string.server_test_delay_value, row.testDelayMillis)
     }
+    val bandwidthText = when {
+        row.testBandwidthKbps == 0L -> ""
+        row.testBandwidthKbps < 0L -> stringResource(R.string.server_test_bandwidth_failed)
+        else -> stringResource(R.string.server_test_bandwidth_value, row.testBandwidthKbps / 1000.0)
+    }
+    val testResult = listOf(delayText, bandwidthText).filter { it.isNotEmpty() }.joinToString("  ·  ")
     val selectedStateDescription = if (isSelected) {
         stringResource(R.string.acc_selected_server)
     } else {
@@ -457,7 +463,7 @@ private fun ServerListItem(
                 Text(
                     testResult,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (row.testDelayMillis < 0L) colorPingRed else colorPing,
+                    color = if (row.testDelayMillis < 0L || row.testBandwidthKbps < 0L) colorPingRed else colorPing,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
