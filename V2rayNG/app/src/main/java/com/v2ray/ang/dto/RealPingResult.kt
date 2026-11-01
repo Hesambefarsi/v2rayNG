@@ -6,4 +6,5 @@ import java.io.Serializable
 data class RealPingResult(
     val guid: String,
     val delayMillis: Long,
+    val bandwidthKbps: Long = 0L,
 ) : Serializable
