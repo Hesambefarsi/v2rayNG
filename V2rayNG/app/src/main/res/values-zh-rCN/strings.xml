@@ -347,6 +347,7 @@
     <string name="title_sub_update">更新订阅</string>
     <string name="title_ping_all_server">测试 TCP 延迟（TCPing）</string>
     <string name="title_real_ping_all_server">测试真连接延迟</string>
+    <string name="title_bandwidth_test_all_server">测试带宽（5 MB）</string>
     <string name="title_user_asset_setting">资源文件</string>
     <string name="title_sort_by_test_results">按测试结果排序</string>
     <string name="title_filter_config">过滤配置</string>
@@ -401,6 +402,8 @@
     <string name="connection_test_testing_count">测试 %d 个配置中…</string>
     <string name="connection_test_available">"连接成功：延时 %1$s"</string>
     <string name="server_test_delay_value">%1$d ms</string>
+    <string name="server_test_bandwidth_value">%1$.1f Mbps</string>
+    <string name="server_test_bandwidth_failed">速度测试失败</string>
     <string name="connection_test_error">连接测试失败：%s</string>
     <string name="connection_test_fail">无法访问互联网</string>
     <string name="connection_test_error_status_code">错误码：#%d</string>
