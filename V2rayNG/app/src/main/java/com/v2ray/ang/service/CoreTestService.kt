@@ -83,14 +83,17 @@ class CoreTestService : Service() {
      * @return The start mode.
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val message = intent?.serializable<TestServiceMessage>("content")
         NotificationHelper.startForeground(
             this,
             NotificationChannelType.CORE_TEST,
             getString(R.string.app_name),
-            getString(R.string.title_real_ping_all_server),
+            getString(
+                if (message?.bandwidth == true) R.string.title_bandwidth_test_all_server
+                else R.string.title_real_ping_all_server
+            ),
             cancelAction
         )
-        val message = intent?.serializable<TestServiceMessage>("content")
         if (message == null) {
             stopSelf(startId)
             return START_NOT_STICKY
@@ -123,6 +126,7 @@ class CoreTestService : Service() {
                 context = this,
                 guids = guidsList,
                 onlyTcp = message.onlyTcp,
+                bandwidth = message.bandwidth,
                 onEvent = { event ->
                     if (activeWorkers.containsKey(worker)) {
                         handleWorkerEvent(event, message, requestId) { activeWorkers.remove(worker) }
@@ -151,17 +155,22 @@ class CoreTestService : Service() {
             }
 
             is RealPingEvent.Result -> {
-                MmkvManager.encodeServerTestDelayMillis(event.guid, event.delayMillis)
+                if (message.bandwidth) {
+                    MmkvManager.encodeServerTestBandwidthKbps(event.guid, event.bandwidthKbps)
+                } else {
+                    MmkvManager.encodeServerTestDelayMillis(event.guid, event.delayMillis)
+                }
                 MessageHelper.sendMsg2UI(
                     this,
                     AppConfig.MSG_MEASURE_CONFIG_SUCCESS,
-                    RealPingResult(event.guid, event.delayMillis),
+                    RealPingResult(event.guid, event.delayMillis, event.bandwidthKbps),
                     requestId,
                 )
             }
 
             is RealPingEvent.Finish -> {
-                if (message.subscriptionId.isNotEmpty()) {
+                // Auto-remove/sort act on delay results, so they do not apply after a bandwidth test.
+                if (message.subscriptionId.isNotEmpty() && !message.bandwidth) {
                     if (MmkvManager.decodeSettingsBool(AppConfig.PREF_AUTO_REMOVE_INVALID_AFTER_TEST, false)) {
                         AngConfigManager.removeInvalidServer(message.subscriptionId)
                     }
