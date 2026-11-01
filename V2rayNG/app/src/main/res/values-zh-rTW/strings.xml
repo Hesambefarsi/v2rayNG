@@ -347,6 +347,7 @@
     <string name="title_sub_update">更新訂閱</string>
     <string name="title_ping_all_server">測試 TCP 延遲（TCPing）</string>
     <string name="title_real_ping_all_server">測試真連接延遲</string>
+    <string name="title_bandwidth_test_all_server">測試頻寬（5 MB）</string>
     <string name="title_user_asset_setting">資源檔案</string>
     <string name="title_sort_by_test_results">依測試結果排序</string>
     <string name="title_filter_config">篩選設定</string>
@@ -401,6 +402,8 @@
     <string name="connection_test_testing_count">正在測試 %d 個設定…</string>
     <string name="connection_test_available">"連線成功：延遲 %1$s"</string>
     <string name="server_test_delay_value">%1$d ms</string>
+    <string name="server_test_bandwidth_value">%1$.1f Mbps</string>
+    <string name="server_test_bandwidth_failed">速度測試失敗</string>
     <string name="connection_test_error">連線測試失敗：%s</string>
     <string name="connection_test_fail">"無法使用網際網路"</string>
     <string name="connection_test_error_status_code">錯誤碼：#%d</string>
