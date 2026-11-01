@@ -491,6 +491,35 @@ object MmkvManager {
     }
 
     /**
+     * Encodes the bandwidth test result for a server.
+     *
+     * @param guid The server GUID.
+     * @param kbps Download speed in kbit/s (-1 = failed, 0 = untested).
+     */
+    fun encodeServerTestBandwidthKbps(guid: String, kbps: Long) {
+        if (guid.isBlank()) {
+            return
+        }
+        val aff = decodeServerAffiliationInfo(guid) ?: ServerAffiliationInfo()
+        aff.testBandwidthKbps = kbps
+        serverAffStorage.encode(guid, JsonUtil.toJson(aff))
+    }
+
+    /**
+     * Clears all bandwidth test results.
+     *
+     * @param keys The list of server GUIDs.
+     */
+    fun clearAllTestBandwidthResults(keys: List<String>?) {
+        keys?.forEach { key ->
+            decodeServerAffiliationInfo(key)?.let { aff ->
+                aff.testBandwidthKbps = 0
+                serverAffStorage.encode(key, JsonUtil.toJson(aff))
+            }
+        }
+    }
+
+    /**
      * Clears all test delay results.
      *
      * @param keys The list of server GUIDs.
