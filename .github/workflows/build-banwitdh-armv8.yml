@@ -1,0 +1,81 @@
+name: Build arm64-v8a APK (bandwidth test, Google Play flavor)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+      with:
+        submodules: 'recursive'
+        fetch-depth: '0'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v4
+      with:
+        log-accepted-android-sdk-licenses: false
+        cmdline-tools-version: '14742923'
+        packages: 'platforms;android-37.0 build-tools;37.0.0 platform-tools'
+
+    - name: Install NDK
+      run: |
+        echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+          --channel=0 \
+          --install "ndk;30.0.16248370"
+        echo "NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> $GITHUB_ENV
+        sed -i '10i\
+        \
+            ndkVersion = "30.0.16248370"' ${{ github.workspace }}/V2rayNG/app/build.gradle.kts
+
+    - name: Build libhevtun (arm64-v8a only)
+      run: |
+        sed -i 's/^ABIS=.*/ABIS="arm64-v8a"/' compile-hevtun.sh
+        bash compile-hevtun.sh
+        cp -r ${{ github.workspace }}/libs ${{ github.workspace }}/V2rayNG/app
+
+    - name: Setup Java
+      uses: actions/setup-java@v6.1.0
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: AndroidLibXrayLite/go.mod
+
+    - name: Build libv2ray.aar (arm64 only, with bandwidth test)
+      working-directory: AndroidLibXrayLite
+      env:
+        ANDROID_NDK_HOME: ${{ env.NDK_HOME }}
+      run: |
+        grep -q "func MeasureOutboundDelay" *.go
+        cp ${{ github.workspace }}/bandwidth/bandwidth.go bandwidth.go
+        go install golang.org/x/mobile/cmd/gomobile@latest
+        export PATH="$PATH:$(go env GOPATH)/bin"
+        gomobile init
+        go get golang.org/x/mobile/bind
+        go mod tidy -v
+        gomobile bind -v -target=android/arm64 -androidapi 24 -trimpath -ldflags='-s -w -buildid= -checklinkname=0' ./
+        mkdir -p ${{ github.workspace }}/V2rayNG/app/libs
+        cp libv2ray.aar ${{ github.workspace }}/V2rayNG/app/libs/libv2ray.aar
+
+    - name: Build APK (playstore, debug, arm64-v8a)
+      run: |
+        cd ${{ github.workspace }}/V2rayNG
+        echo "sdk.dir=${ANDROID_HOME}" > local.properties
+        chmod 755 gradlew
+        ./gradlew assemblePlaystoreDebug -PABI_FILTERS=arm64-v8a
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v7
+      with:
+        name: v2rayNG-bandwidth-playstore-arm64-v8a
+        path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/playstore/debug/*arm64-v8a*.apk
