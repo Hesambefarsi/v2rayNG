@@ -244,6 +244,9 @@
     <string name="title_pref_delay_test_url">Сервис проверки реальной задержки</string>
     <string name="summary_pref_delay_test_url" translatable="false">URL</string>
     <string name="title_pref_real_ping_concurrency">Параллельные тесты реальной задержки</string>
+    <string name="title_pref_bandwidth_test_size">Размер загрузки для теста скорости (МБ)</string>
+    <string name="title_pref_bandwidth_pass_speed">Порог скорости для успешного теста (Мбит/с)</string>
+    <string name="title_pref_bandwidth_stop_after">Остановить после успешной проверки N серверов (0 = проверить все)</string>
 
     <string name="title_pref_ip_api_url">Сервис проверки текущего соединения</string>
     <string name="summary_pref_ip_api_url" translatable="false">URL</string>
@@ -347,7 +350,9 @@
     <string name="title_sub_update">Обновить подписку</string>
     <string name="title_ping_all_server">Проверить TCP-задержку</string>
     <string name="title_real_ping_all_server">Проверить реальную задержку</string>
-    <string name="title_bandwidth_test_all_server">Тест пропускной способности (5 МБ)</string>
+    <string name="title_bandwidth_test_all_server">Тест пропускной способности</string>
+    <string name="title_bandwidth_test_stop">Остановить тест пропускной способности</string>
+    <string name="title_sort_by_bandwidth">Сортировать по пропускной способности</string>
     <string name="title_user_asset_setting">Файлы ресурсов</string>
     <string name="title_sort_by_test_results">Сортировать по результатам теста</string>
     <string name="title_filter_config">Фильтр профилей</string>

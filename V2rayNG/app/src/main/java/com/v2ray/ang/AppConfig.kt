@@ -89,6 +89,9 @@ object AppConfig {
     const val PREF_AUTO_REMOVE_INVALID_AFTER_TEST = "pref_auto_remove_invalid_after_test"
     const val PREF_AUTO_SORT_AFTER_TEST = "pref_auto_sort_after_test"
     const val PREF_REAL_PING_CONCURRENCY = "pref_real_ping_concurrency"
+    const val PREF_BANDWIDTH_TEST_SIZE_MB = "pref_bandwidth_test_size_mb"
+    const val PREF_BANDWIDTH_PASS_MBPS = "pref_bandwidth_pass_mbps"
+    const val PREF_BANDWIDTH_STOP_AFTER_PASSED = "pref_bandwidth_stop_after_passed"
 
     /** Cache keys. */
     const val CACHE_SUBSCRIPTION_ID = "cache_subscription_id"
@@ -136,9 +139,11 @@ object AppConfig {
     const val TG_CHANNEL_URL = "https://t.me/github_2dust"
     const val DELAY_TEST_URL = "https://www.gstatic.com/generate_204"
     const val DELAY_TEST_URL2 = "https://www.google.com/generate_204"
-    const val BANDWIDTH_TEST_URL = "https://speed.cloudflare.com/__down?bytes=5000000"
-    const val BANDWIDTH_TEST_BYTES = 5_000_000L
-    const val BANDWIDTH_TEST_TIMEOUT_SEC = 30L
+    const val BANDWIDTH_TEST_URL_BASE = "https://speed.cloudflare.com/__down?bytes="
+    /** The download stops at the size limit or this duration (after the first byte), whichever comes first. */
+    const val BANDWIDTH_TEST_MAX_DOWNLOAD_MS = 3000L
+    const val DEFAULT_BANDWIDTH_TEST_SIZE_MB = 8
+    const val DEFAULT_BANDWIDTH_PASS_MBPS = 5
     const val OBSERVATORY_LEAST_PING_INTERVAL = "3m"
     const val OBSERVATORY_LEAST_LOAD_INTERVAL = "5m"
     const val OBSERVATORY_LEAST_LOAD_METHOD = "HEAD"
@@ -198,6 +203,7 @@ object AppConfig {
     const val MSG_MEASURE_CONFIG_SUCCESS = 72
     const val MSG_MEASURE_CONFIG_NOTIFY = 73
     const val MSG_MEASURE_CONFIG_FINISH = 74
+    const val MSG_MEASURE_CONFIG_STOP = 75
 
     const val MSG_SUB_UPDATE_START = 8
     const val MSG_SUB_UPDATE_CANCEL = 81

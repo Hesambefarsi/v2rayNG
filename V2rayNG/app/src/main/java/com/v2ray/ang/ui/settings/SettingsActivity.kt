@@ -179,6 +179,9 @@ fun SettingsScreen(
     var isBooted by rememberMmkvBool(AppConfig.PREF_IS_BOOTED, false)
     var delayTestUrl by rememberMmkvString(AppConfig.PREF_DELAY_TEST_URL, "")
     var realPingConcurrency by rememberMmkvString(AppConfig.PREF_REAL_PING_CONCURRENCY, "16")
+    var bandwidthTestSizeMb by rememberMmkvString(AppConfig.PREF_BANDWIDTH_TEST_SIZE_MB, AppConfig.DEFAULT_BANDWIDTH_TEST_SIZE_MB.toString())
+    var bandwidthPassMbps by rememberMmkvString(AppConfig.PREF_BANDWIDTH_PASS_MBPS, AppConfig.DEFAULT_BANDWIDTH_PASS_MBPS.toString())
+    var bandwidthStopAfterPassed by rememberMmkvString(AppConfig.PREF_BANDWIDTH_STOP_AFTER_PASSED, "0")
     var ipApiUrl by rememberMmkvString(AppConfig.PREF_IP_API_URL, "")
 
     val isVpn = mode == VPN
@@ -661,6 +664,24 @@ fun SettingsScreen(
                     value = realPingConcurrency,
                     keyboardNumber = true,
                     onValueChanged = { realPingConcurrency = it }
+                )
+                SettingsEditItem(
+                    title = stringResource(R.string.title_pref_bandwidth_test_size),
+                    value = bandwidthTestSizeMb,
+                    keyboardNumber = true,
+                    onValueChanged = { bandwidthTestSizeMb = it }
+                )
+                SettingsEditItem(
+                    title = stringResource(R.string.title_pref_bandwidth_pass_speed),
+                    value = bandwidthPassMbps,
+                    keyboardNumber = true,
+                    onValueChanged = { bandwidthPassMbps = it }
+                )
+                SettingsEditItem(
+                    title = stringResource(R.string.title_pref_bandwidth_stop_after),
+                    value = bandwidthStopAfterPassed,
+                    keyboardNumber = true,
+                    onValueChanged = { bandwidthStopAfterPassed = it }
                 )
                 SettingsEditItem(
                     title = stringResource(R.string.title_pref_ip_api_url),

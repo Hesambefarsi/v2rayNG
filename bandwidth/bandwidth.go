@@ -1,20 +1,14 @@
 package libv2ray
 
-// Add this file to the root of 2dust/AndroidLibXrayLite (next to the file that
-// defines MeasureOutboundDelay), then rebuild the AAR:
-//
-//   gomobile bind -v -androidapi 24 -trimpath -ldflags='-s -w -buildid= -checklinkname=0' ./
-//
-// It mirrors MeasureOutboundDelay: build a throw-away core instance from the
-// given outbound config (no inbounds, nothing listening), download a file
-// through it using core.Dial, then close the instance. No VPN connection and
-// no local proxy port are needed.
+// Copied into AndroidLibXrayLite by CI (see .github/workflows/build-bandwidth.yml)
+// before gomobile builds libv2ray.aar. It mirrors MeasureOutboundDelay: build a
+// throw-away core instance from the given outbound config (no inbounds, nothing
+// listening), download a file through it using core.Dial, then close the instance.
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -25,21 +19,23 @@ import (
 	v2serial "github.com/xtls/xray-core/infra/conf/serial"
 )
 
-// MeasureOutboundBandwidth downloads up to maxBytes from url through the
-// outbound described by ConfigureFileContent.
+// MeasureOutboundBandwidth downloads from url through the outbound described by
+// ConfigureFileContent. The download stops when maxBytes have been received or
+// maxDownloadMs have passed since the first byte, whichever comes first.
 //
-// gomobile only allows (value, error) returns, so the result is a compact
-// string: "bytes,ttfbMs,durationMs"  e.g. "5000000,310,2840".
-func MeasureOutboundBandwidth(ConfigureFileContent string, url string, maxBytes int64, timeoutSec int64) (string, error) {
+// gomobile only allows (value, error) returns, so the result is a string:
+//
+//	"bytes,ttfbMs,downloadMs"
+//
+// where bytes/downloadMs describe the transfer AFTER the first byte arrived
+// (so connection setup does not count against the speed), e.g. "7950000,310,2840".
+func MeasureOutboundBandwidth(ConfigureFileContent string, url string, maxBytes int64, maxDownloadMs int64) (string, error) {
 	config, err := v2serial.LoadJSONConfig(strings.NewReader(ConfigureFileContent))
 	if err != nil {
 		return "", err
 	}
 	// Don't listen to anything for test purposes.
 	config.Inbound = nil
-	// NOTE: if your MeasureOutboundDelay also trims config.App / config.Transport
-	// to keep only OutboundConfig, Dispatcher and Log, copy those lines here too.
-	// It works without them, the instance is just a bit heavier.
 
 	inst, err := v2core.New(config)
 	if err != nil {
@@ -50,22 +46,23 @@ func MeasureOutboundBandwidth(ConfigureFileContent string, url string, maxBytes 
 	}
 	defer inst.Close()
 
-	if timeoutSec <= 0 {
-		timeoutSec = 30
-	}
 	if maxBytes <= 0 {
-		maxBytes = 5_000_000
+		maxBytes = 8_000_000
 	}
-	return measureInstBandwidth(context.Background(), inst, url, maxBytes, time.Duration(timeoutSec)*time.Second)
+	if maxDownloadMs <= 0 {
+		maxDownloadMs = 3000
+	}
+	return measureInstBandwidth(context.Background(), inst, url, maxBytes, time.Duration(maxDownloadMs)*time.Millisecond)
 }
 
-func measureInstBandwidth(ctx context.Context, inst *v2core.Instance, url string, maxBytes int64, timeout time.Duration) (string, error) {
+func measureInstBandwidth(ctx context.Context, inst *v2core.Instance, url string, maxBytes int64, maxDownload time.Duration) (string, error) {
 	if inst == nil {
 		return "", errors.New("core instance nil")
 	}
 	if url == "" {
-		url = "https://speed.cloudflare.com/__down?bytes=5000000"
+		return "", errors.New("empty url")
 	}
+	const connectTimeout = 12 * time.Second // dial + TLS + headers + first byte
 
 	tr := &http.Transport{
 		TLSHandshakeTimeout: 6 * time.Second,
@@ -78,14 +75,19 @@ func measureInstBandwidth(ctx context.Context, inst *v2core.Instance, url string
 			return v2core.Dial(dctx, inst, dest)
 		},
 	}
-	// Client.Timeout covers connect + headers + body, so a stalled download aborts.
-	c := &http.Client{Transport: tr, Timeout: timeout}
+	// No Client.Timeout: timing is driven by the two timers below, which cancel the request.
+	c := &http.Client{Transport: tr}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	reqCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	req, err := http.NewRequestWithContext(reqCtx, "GET", url, nil)
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Cache-Control", "no-cache")
+
+	connectTimer := time.AfterFunc(connectTimeout, cancel)
+	defer connectTimer.Stop()
 
 	start := time.Now()
 	resp, err := c.Do(req)
@@ -97,33 +99,50 @@ func measureInstBandwidth(ctx context.Context, inst *v2core.Instance, url string
 		return "", fmt.Errorf("unexpected status: %d", resp.StatusCode)
 	}
 
-	buf := make([]byte, 64*1024)
-	var total int64
+	buf := make([]byte, 32*1024)
+	var total, firstChunk int64
 	var firstByte time.Time
+	var dlTimer *time.Timer
+	var rerr error
 	for total < maxBytes {
-		n, rerr := resp.Body.Read(buf)
+		var n int
+		n, rerr = resp.Body.Read(buf)
 		if n > 0 {
+			total += int64(n)
 			if firstByte.IsZero() {
 				firstByte = time.Now()
+				firstChunk = int64(n)
+				connectTimer.Stop()
+				// Time limit: abort the transfer maxDownload after the first byte.
+				dlTimer = time.AfterFunc(maxDownload, cancel)
 			}
-			total += int64(n)
-		}
-		if rerr == io.EOF {
-			break
 		}
 		if rerr != nil {
-			if total == 0 {
-				return "", rerr
-			}
-			break // partial download still gives a usable speed figure
+			break // EOF, time limit reached (request cancelled), or network error
 		}
 	}
 	end := time.Now()
+	if dlTimer != nil {
+		dlTimer.Stop()
+	}
 
-	if total == 0 || firstByte.IsZero() {
+	if firstByte.IsZero() {
+		if rerr != nil {
+			return "", rerr
+		}
 		return "", errors.New("no data received")
 	}
+
 	ttfb := firstByte.Sub(start).Milliseconds()
-	dur := end.Sub(start).Milliseconds()
-	return fmt.Sprintf("%d,%d,%d", total, ttfb, dur), nil
+	bytes := total - firstChunk
+	downloadMs := end.Sub(firstByte).Milliseconds()
+	if bytes <= 0 || downloadMs <= 0 {
+		// Tiny transfer: fall back to the whole request so we still report something.
+		bytes = total
+		downloadMs = end.Sub(start).Milliseconds()
+		if downloadMs <= 0 {
+			downloadMs = 1
+		}
+	}
+	return fmt.Sprintf("%d,%d,%d", bytes, ttfb, downloadMs), nil
 }

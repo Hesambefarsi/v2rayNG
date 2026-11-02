@@ -89,20 +89,18 @@ object CoreNativeManager {
      *
      * @param config The configuration JSON string
      * @param testUrl The URL of the file to download
+     * @param maxBytes Stop downloading after this many bytes
+     * @param maxDownloadMs Stop downloading after this long (measured from the first byte)
      * @return Download speed in kbit/s, or -1 if the test failed
      */
-    fun measureOutboundBandwidth(config: String, testUrl: String): Long {
+    fun measureOutboundBandwidth(config: String, testUrl: String, maxBytes: Long, maxDownloadMs: Long): Long {
         return try {
-            // The native side returns "bytes,ttfbMs,durationMs".
-            val raw = Libv2ray.measureOutboundBandwidth(
-                config,
-                testUrl,
-                AppConfig.BANDWIDTH_TEST_BYTES,
-                AppConfig.BANDWIDTH_TEST_TIMEOUT_SEC
-            )
+            // The native side returns "bytes,ttfbMs,downloadMs", where bytes/downloadMs
+            // cover the transfer after the first byte arrived.
+            val raw = Libv2ray.measureOutboundBandwidth(config, testUrl, maxBytes, maxDownloadMs)
             val parts = raw.split(",").map { it.trim().toLong() }
             val bytes = parts[0]
-            val downloadMs = (parts[2] - parts[1]).takeIf { it > 0 } ?: parts[2]
+            val downloadMs = parts[2]
             if (bytes <= 0L || downloadMs <= 0L) -1L else bytes * 8L / downloadMs
         } catch (e: Exception) {
             LogUtil.e(AppConfig.TAG, "Failed to measure outbound bandwidth", e)

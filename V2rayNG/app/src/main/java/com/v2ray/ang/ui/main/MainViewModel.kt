@@ -325,6 +325,8 @@ class MainViewModel(
             MainAction.RemoveDuplicateServers -> removeDuplicateServerAsync()
             MainAction.RemoveInvalidServers -> removeInvalidServerAsync()
             MainAction.SortByTestResults -> sortByTestResultsAsync()
+            MainAction.SortByBandwidth -> sortByBandwidthAsync()
+            MainAction.StopBandwidthTest -> stopBandwidthTest()
             MainAction.UpdateSubscriptions -> importConfigViaSub(uiState.value.selectedGroupId)
             is MainAction.UpdateGroupSubscription -> importConfigViaSub(action.groupId)
             MainAction.ExportAll -> exportAllAsync()
@@ -749,6 +751,37 @@ class MainViewModel(
                 }
             }
         }
+    }
+
+    private fun sortByBandwidthAsync() {
+        launchLoading {
+            withContext(ioDispatcher) {
+                try {
+                    val subs = if (uiState.value.selectedGroupId.isEmpty()) {
+                        dataSource.getSubsList()
+                    } else {
+                        listOf(uiState.value.selectedGroupId)
+                    }
+                    subs.forEach { dataSource.sortByBandwidthForSub(it) }
+                    cacheMutex.withLock { groupDataCache.clear() }
+                    setupGroupTab(forceRefresh = true)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (e: Exception) {
+                    LogUtil.e(AppConfig.TAG, "Sort by bandwidth failed", e)
+                    toastError(R.string.toast_failure)
+                }
+            }
+        }
+    }
+
+    /**
+     * Gracefully stops a running bandwidth test: the server being tested finishes,
+     * the rest are skipped, and results gathered so far are kept and shown.
+     */
+    private fun stopBandwidthTest() {
+        if (testRequests.bulk?.bandwidth != true) return
+        dataSource.sendMsg2TestService(TestServiceMessage(key = AppConfig.MSG_MEASURE_CONFIG_STOP))
     }
 
     private fun sortByTestResultsInternal() {

@@ -244,6 +244,9 @@
     <string name="title_pref_delay_test_url">真連接延遲測試 URL</string>
     <string name="summary_pref_delay_test_url" translatable="false">URL</string>
     <string name="title_pref_real_ping_concurrency">同時執行的真實延遲測試數</string>
+    <string name="title_pref_bandwidth_test_size">頻寬測試下載大小（MB）</string>
+    <string name="title_pref_bandwidth_pass_speed">頻寬測試達標速度（Mbps）</string>
+    <string name="title_pref_bandwidth_stop_after">N 個伺服器達標後停止測試（0 = 全部測試）</string>
 
     <string name="title_pref_ip_api_url">目前連線資訊測試 URL</string>
     <string name="summary_pref_ip_api_url" translatable="false">URL</string>
@@ -347,7 +350,9 @@
     <string name="title_sub_update">更新訂閱</string>
     <string name="title_ping_all_server">測試 TCP 延遲（TCPing）</string>
     <string name="title_real_ping_all_server">測試真連接延遲</string>
-    <string name="title_bandwidth_test_all_server">測試頻寬（5 MB）</string>
+    <string name="title_bandwidth_test_all_server">測試頻寬</string>
+    <string name="title_bandwidth_test_stop">停止頻寬測試</string>
+    <string name="title_sort_by_bandwidth">依頻寬排序</string>
     <string name="title_user_asset_setting">資源檔案</string>
     <string name="title_sort_by_test_results">依測試結果排序</string>
     <string name="title_filter_config">篩選設定</string>

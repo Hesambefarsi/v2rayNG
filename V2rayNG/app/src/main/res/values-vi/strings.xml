@@ -244,6 +244,9 @@
     <string name="title_pref_delay_test_url">URL kiểm tra độ trễ thực</string>
     <string name="summary_pref_delay_test_url" translatable="false">URL</string>
     <string name="title_pref_real_ping_concurrency">Số lượt kiểm tra độ trễ thực đồng thời</string>
+    <string name="title_pref_bandwidth_test_size">Dung lượng tải xuống khi kiểm tra băng thông (MB)</string>
+    <string name="title_pref_bandwidth_pass_speed">Tốc độ đạt khi kiểm tra băng thông (Mbps)</string>
+    <string name="title_pref_bandwidth_stop_after">Dừng sau khi N máy chủ đạt (0 = kiểm tra tất cả)</string>
 
     <string name="title_pref_ip_api_url">URL kiểm tra thông tin kết nối hiện tại</string>
     <string name="summary_pref_ip_api_url" translatable="false">URL</string>
@@ -347,7 +350,9 @@
     <string name="title_sub_update">Cập nhật gói đăng ký</string>
     <string name="title_ping_all_server">Kiểm tra độ trễ TCP (TCPing)</string>
     <string name="title_real_ping_all_server">Kiểm tra độ trễ thực</string>
-    <string name="title_bandwidth_test_all_server">Kiểm tra băng thông (5 MB)</string>
+    <string name="title_bandwidth_test_all_server">Kiểm tra băng thông</string>
+    <string name="title_bandwidth_test_stop">Dừng kiểm tra băng thông</string>
+    <string name="title_sort_by_bandwidth">Sắp xếp theo băng thông</string>
     <string name="title_user_asset_setting">Tệp tài nguyên</string>
     <string name="title_sort_by_test_results">Sắp xếp theo kết quả kiểm tra</string>
     <string name="title_filter_config">Lọc cấu hình</string>

@@ -387,6 +387,35 @@ object SettingsManager {
     }
 
     /**
+     * Get the bandwidth test download size.
+     * @return Size in bytes (setting is in MB, clamped to 1..100).
+     */
+    fun getBandwidthTestBytes(): Long {
+        val mb = MmkvManager.decodeSettingsString(AppConfig.PREF_BANDWIDTH_TEST_SIZE_MB)?.toIntOrNull()
+            ?: AppConfig.DEFAULT_BANDWIDTH_TEST_SIZE_MB
+        return mb.coerceIn(1, 100) * 1_000_000L
+    }
+
+    /**
+     * Get the speed a server must reach to count as having passed the bandwidth test.
+     * @return Speed in kbit/s (setting is in Mbit/s).
+     */
+    fun getBandwidthPassKbps(): Long {
+        val mbps = MmkvManager.decodeSettingsString(AppConfig.PREF_BANDWIDTH_PASS_MBPS)?.toIntOrNull()
+            ?: AppConfig.DEFAULT_BANDWIDTH_PASS_MBPS
+        return mbps.coerceIn(0, 10_000) * 1000L
+    }
+
+    /**
+     * Get how many servers must pass the bandwidth test before the run stops.
+     * @return Number of passed servers, or 0 to test every server.
+     */
+    fun getBandwidthStopAfterPassed(): Int {
+        val value = MmkvManager.decodeSettingsString(AppConfig.PREF_BANDWIDTH_STOP_AFTER_PASSED)?.toIntOrNull() ?: 0
+        return value.coerceIn(0, 10_000)
+    }
+
+    /**
      * Retrieves the currently selected VPN interface address configuration.
      * This method reads the user's preference for VPN interface addressing and returns
      * the corresponding configuration containing IPv4 and IPv6 addresses.

@@ -595,6 +595,27 @@ object AngConfigManager {
     }
 
     /**
+     * Sorts servers by bandwidth test result (fastest first) for a subscription.
+     * Servers that were not tested or failed the test go to the end.
+     *
+     * @param subId The subscription ID.
+     */
+    fun sortByBandwidthForSub(subId: String) {
+        val serverList = MmkvManager.decodeServerList(subId)
+        if (serverList.isEmpty()) return
+
+        val sorted = serverList
+            .map { guid ->
+                val kbps = MmkvManager.decodeServerAffiliationInfo(guid)?.testBandwidthKbps ?: 0L
+                guid to if (kbps <= 0L) Long.MIN_VALUE else kbps
+            }
+            .sortedByDescending { it.second }
+            .map { it.first }
+            .toMutableList()
+        MmkvManager.encodeServerList(sorted, subId)
+    }
+
+    /**
      * Parses the configuration via a subscription.
      *
      * @param server The server string.

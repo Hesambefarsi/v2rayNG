@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 internal object RealPingExecutionLimiter {
@@ -57,6 +58,11 @@ class RealPingWorkerService(
     private val scope = CoroutineScope(job + dispatcher + CoroutineName("RealPingBatchWorker"))
 
     private val runningCount = AtomicInteger(0)
+    private val stopRequested = AtomicBoolean(false)
+    private val passedCount = AtomicInteger(0)
+    private val bandwidthPassKbps = if (bandwidth) SettingsManager.getBandwidthPassKbps() else 0L
+    private val bandwidthStopAfterPassed = if (bandwidth) SettingsManager.getBandwidthStopAfterPassed() else 0
+    private val bandwidthTestBytes = if (bandwidth) SettingsManager.getBandwidthTestBytes() else 0L
     private val totalCount = AtomicInteger(0)
 
     fun start() {
@@ -65,8 +71,15 @@ class RealPingWorkerService(
             scope.launch {
                 runningCount.incrementAndGet()
                 try {
+                    // Stop requested (manually, or enough servers passed): skip the rest, keep results so far.
+                    if (stopRequested.get()) return@launch
                     if (bandwidth) {
                         val kbps = startBandwidth(guid)
+                        if (bandwidthStopAfterPassed > 0 && kbps >= bandwidthPassKbps &&
+                            passedCount.incrementAndGet() >= bandwidthStopAfterPassed
+                        ) {
+                            stopRequested.set(true)
+                        }
                         if (scope.isActive) {
                             onEvent(RealPingEvent.Result(guid, 0L, kbps))
                         }
@@ -104,6 +117,14 @@ class RealPingWorkerService(
 
     fun cancel() {
         job.cancel()
+    }
+
+    /**
+     * Gracefully stop: the test already running finishes, the remaining servers are skipped,
+     * and the batch still reports Finish so results gathered so far are kept.
+     */
+    fun requestStop() {
+        stopRequested.set(true)
     }
 
     private fun close() {
@@ -167,7 +188,12 @@ class RealPingWorkerService(
             return retFailure
         }
         return RealPingExecutionLimiter.run(config.configType) {
-            CoreNativeManager.measureOutboundBandwidth(configResult.content, AppConfig.BANDWIDTH_TEST_URL)
+            CoreNativeManager.measureOutboundBandwidth(
+                configResult.content,
+                AppConfig.BANDWIDTH_TEST_URL_BASE + bandwidthTestBytes,
+                bandwidthTestBytes,
+                AppConfig.BANDWIDTH_TEST_MAX_DOWNLOAD_MS
+            )
         }
     }
 

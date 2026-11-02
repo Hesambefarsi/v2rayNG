@@ -244,6 +244,9 @@
     <string name="title_pref_delay_test_url">প্রকৃত বিলম্ব পরীক্ষার URL</string>
     <string name="summary_pref_delay_test_url" translatable="false">URL</string>
     <string name="title_pref_real_ping_concurrency">একযোগে প্রকৃত বিলম্ব পরীক্ষা</string>
+    <string name="title_pref_bandwidth_test_size">ব্যান্ডউইথ পরীক্ষার ডাউনলোড আকার (MB)</string>
+    <string name="title_pref_bandwidth_pass_speed">ব্যান্ডউইথ পাস গতি (Mbps)</string>
+    <string name="title_pref_bandwidth_stop_after">N সার্ভার পাস করলে পরীক্ষা বন্ধ করুন (0 = সব পরীক্ষা)</string>
 
     <string name="title_pref_ip_api_url">বর্তমান সংযোগের তথ্য পরীক্ষার URL</string>
     <string name="summary_pref_ip_api_url" translatable="false">URL</string>
@@ -347,7 +350,9 @@
     <string name="title_sub_update">সাবস্ক্রিপশন আপডেট</string>
     <string name="title_ping_all_server">TCP বিলম্ব পরীক্ষা করুন (TCPing)</string>
     <string name="title_real_ping_all_server">প্রকৃত বিলম্ব পরীক্ষা করুন</string>
-    <string name="title_bandwidth_test_all_server">ব্যান্ডউইথ পরীক্ষা (৫ MB)</string>
+    <string name="title_bandwidth_test_all_server">ব্যান্ডউইথ পরীক্ষা</string>
+    <string name="title_bandwidth_test_stop">ব্যান্ডউইথ পরীক্ষা বন্ধ করুন</string>
+    <string name="title_sort_by_bandwidth">ব্যান্ডউইথ অনুযায়ী সাজান</string>
     <string name="title_user_asset_setting">অ্যাসেট ফাইল</string>
     <string name="title_sort_by_test_results">টেস্ট ফলাফল দ্বারা সাজানো</string>
     <string name="title_filter_config">কনফিগারেশন ফাইল ফিল্টার করুন</string>

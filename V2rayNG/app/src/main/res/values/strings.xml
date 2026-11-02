@@ -244,6 +244,9 @@
     <string name="title_pref_delay_test_url">Real delay test URL</string>
     <string name="summary_pref_delay_test_url" translatable="false">URL</string>
     <string name="title_pref_real_ping_concurrency">Concurrent real-delay tests</string>
+    <string name="title_pref_bandwidth_test_size">Bandwidth test download size (MB)</string>
+    <string name="title_pref_bandwidth_pass_speed">Bandwidth pass speed (Mbps)</string>
+    <string name="title_pref_bandwidth_stop_after">Stop bandwidth test after N servers pass (0 = test all)</string>
 
     <string name="title_pref_ip_api_url">Current connection info test URL</string>
     <string name="summary_pref_ip_api_url" translatable="false">URL</string>
@@ -347,7 +350,9 @@
     <string name="title_sub_update">Update subscription</string>
     <string name="title_ping_all_server">Test TCP delays (TCPing)</string>
     <string name="title_real_ping_all_server">Test real delays</string>
-    <string name="title_bandwidth_test_all_server">Test bandwidth (5 MB)</string>
+    <string name="title_bandwidth_test_all_server">Test bandwidth</string>
+    <string name="title_bandwidth_test_stop">Stop bandwidth test</string>
+    <string name="title_sort_by_bandwidth">Sort by bandwidth</string>
     <string name="title_user_asset_setting">Asset files</string>
     <string name="title_sort_by_test_results">Sort by test results</string>
     <string name="title_filter_config">Filter configs</string>

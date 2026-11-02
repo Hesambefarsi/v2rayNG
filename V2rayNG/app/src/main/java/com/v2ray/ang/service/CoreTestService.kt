@@ -84,6 +84,12 @@ class CoreTestService : Service() {
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val message = intent?.serializable<TestServiceMessage>("content")
+        if (message?.key == AppConfig.MSG_MEASURE_CONFIG_STOP) {
+            // Graceful stop. Does not start a foreground notification when nothing is running.
+            activeWorkers.keys.forEach { it.requestStop() }
+            if (activeWorkers.isEmpty()) stopSelf(startId)
+            return START_NOT_STICKY
+        }
         NotificationHelper.startForeground(
             this,
             NotificationChannelType.CORE_TEST,

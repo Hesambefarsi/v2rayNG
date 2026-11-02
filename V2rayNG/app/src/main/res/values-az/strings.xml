@@ -244,6 +244,9 @@
     <string name="title_pref_delay_test_url">Real gecikmə sınağı URL-i</string>
     <string name="summary_pref_delay_test_url" translatable="false">URL</string>
     <string name="title_pref_real_ping_concurrency">Eyni vaxtda aparılan real gecikmə sınaqları</string>
+    <string name="title_pref_bandwidth_test_size">Sürət testinin yükləmə ölçüsü (MB)</string>
+    <string name="title_pref_bandwidth_pass_speed">Sürət testindən keçmə həddi (Mbps)</string>
+    <string name="title_pref_bandwidth_stop_after">N server keçdikdən sonra dayandır (0 = hamısını test et)</string>
 
     <string name="title_pref_ip_api_url">Cari bağlantı məlumatı sınağı URL-i</string>
     <string name="summary_pref_ip_api_url" translatable="false">URL</string>
@@ -347,7 +350,9 @@
     <string name="title_sub_update">Abunəliyi yenilə</string>
     <string name="title_ping_all_server">TCP gecikmələrini sınaqdan keçir (TCPing)</string>
     <string name="title_real_ping_all_server">Real gecikmələri sınaqdan keçir</string>
-    <string name="title_bandwidth_test_all_server">Sürət testi (5 MB)</string>
+    <string name="title_bandwidth_test_all_server">Sürət testi</string>
+    <string name="title_bandwidth_test_stop">Sürət testini dayandır</string>
+    <string name="title_sort_by_bandwidth">Sürətə görə sırala</string>
     <string name="title_user_asset_setting">Resurs faylları</string>
     <string name="title_sort_by_test_results">Sınaq nəticələrinə görə çeşidlə</string>
     <string name="title_filter_config">Konfiqurasiyaları filtrdən keçir</string>
