@@ -103,11 +103,18 @@ data class ProfileItem(
      * Returns a copy; the caller must not modify it further.
      */
     fun duplicateIdentity(): ProfileItem =
-        copy(
+        ProfileItem(
+            configType = configType,          // protocol (vless, vmess, trojan...)
             configVersion = 0,
+            addedTime = 0L,                   // IMPORTANT: default is "now", so it must be fixed
             subscriptionId = "",
-            addedTime = 0L,
-            remarks = "",
-            description = null
+            server = server?.trim()?.lowercase(),   // server IP / domain
+            serverPort = serverPort?.trim(),
+            password = password,              // UUID for VLESS/VMess, password for Trojan/SS/Hysteria2
+            method = method,                  // cipher (Shadowsocks / VMess)
+            username = username,              // SOCKS / HTTP
+            flow = flow,
+            network = network,                // tcp / ws / grpc / xhttp...
+            security = security               // none / tls / reality
         )
 }
